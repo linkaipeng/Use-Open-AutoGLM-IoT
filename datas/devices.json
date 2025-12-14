@@ -1,0 +1,203 @@
+[
+  {
+    "id": "vacuum",
+    "name": "扫地机",
+    "app": "Roborock",
+    "icon": "roborock.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "action_0",
+        "name": "全屋清洁",
+        "command": "打开{app}应用，启动扫地机全屋清扫"
+      },
+      {
+        "id": "action_1",
+        "name": "返回基站",
+        "command": "打开{app}应用，让扫地机返回基站"
+      }
+    ]
+  },
+  {
+    "id": "xiaopeng_car",
+    "name": "小鹏汽车",
+    "app": "小鹏汽车",
+    "icon": "xiaopeng.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "open_ac",
+        "name": "打开车里空调",
+        "command": "打开{app}应用，打开车里空调"
+      },
+      {
+        "id": "smart_deodorize",
+        "name": "打开智能除味",
+        "command": "打开{app}应用，车内温度里面找到智能除味，打开智能除味"
+      }
+    ]
+  },
+  {
+    "id": "living_room_ac",
+    "name": "客厅空调",
+    "app": "美的美居",
+    "icon": "meide.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "turn_on",
+        "name": "打开",
+        "command": "打开{app}应用，打开客厅空调"
+      },
+      {
+        "id": "turn_off",
+        "name": "关闭",
+        "command": "打开{app}应用，关闭客厅空调"
+      },
+      {
+        "id": "set_temp_26",
+        "name": "26度",
+        "command": "打开{app}应用，将客厅空调设置为26度"
+      }
+    ]
+  },
+  {
+    "id": "master_bedroom_ac",
+    "name": "主卧空调",
+    "app": "美的美居",
+    "icon": "meide.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "turn_on",
+        "name": "打开",
+        "command": "打开{app}应用，打开主卧空调"
+      },
+      {
+        "id": "turn_off",
+        "name": "关闭",
+        "command": "打开{app}应用，关闭主卧空调"
+      },
+      {
+        "id": "set_temp_26",
+        "name": "26度",
+        "command": "打开{app}应用，将主卧空调设置为26度"
+      }
+    ]
+  },
+  {
+    "id": "small_bedroom_ac",
+    "name": "小卧室空调",
+    "app": "美的美居",
+    "icon": "meide.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "turn_on",
+        "name": "打开",
+        "command": "打开{app}应用，打开小卧室空调"
+      },
+      {
+        "id": "turn_off",
+        "name": "关闭",
+        "command": "打开{app}应用，关闭小卧室空调"
+      },
+      {
+        "id": "set_temp_26",
+        "name": "26度",
+        "command": "打开{app}应用，将小卧室空调设置为26度"
+      }
+    ]
+  },
+  {
+    "id": "refrigerator",
+    "name": "冰箱",
+    "app": "美的美居",
+    "icon": "meide.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "smart_fresh",
+        "name": "智能保鲜",
+        "command": "打开{app}应用，智能保鲜"
+      },
+      {
+        "id": "ultra_quiet",
+        "name": "超智能降噪",
+        "command": "打开{app}应用，超智能降噪"
+      }
+    ]
+  },
+  {
+    "id": "air_purifier",
+    "name": "空气净化器",
+    "app": "米家",
+    "icon": "mijia.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "turn_on",
+        "name": "打开",
+        "command": "打开{app}应用，首页设备列表里找到空气净化器，打开空气净化器"
+      },
+      {
+        "id": "turn_off",
+        "name": "关闭",
+        "command": "打开{app}应用，首页设备列表里找到空气净化器，关闭空气净化器"
+      },
+      {
+        "id": "auto_mode",
+        "name": "自动模式",
+        "command": "打开{app}应用，首页设备列表里找到空气净化器，将空气净化器设置为自动模式"
+      }
+    ]
+  },
+  {
+    "id": "xiaomi_speaker",
+    "name": "小米音箱",
+    "app": "米家",
+    "icon": "mijia.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "action_0",
+        "name": "播放今日推荐",
+        "command": "打开{app}应用，首页设备列表里找到智能音箱，进入里面播放今日推荐歌曲"
+      }
+    ]
+  },
+  {
+    "id": "thermohygrometer",
+    "name": "温湿度计",
+    "app": "米家",
+    "icon": "mijia.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "read_temp_humidity",
+        "name": "读取温湿度",
+        "command": "打开{app}应用，首页设备列表里找到温湿度计，读取当前家里的温度和湿度"
+      }
+    ]
+  },
+  {
+    "id": "master_bedroom_humidifier",
+    "name": "主卧加湿器",
+    "app": "米家",
+    "icon": "mijia.webp",
+    "status": "待机",
+    "actions": [
+      {
+        "id": "turn_on",
+        "name": "打开",
+        "command": "打开{app}应用，首页设备列表里找到加湿器开关，打开主卧加湿器"
+      },
+      {
+        "id": "turn_off",
+        "name": "关闭",
+        "command": "打开{app}应用，首页设备列表里找到加湿器开关，关闭主卧加湿器"
+      }
+    ]
+  }
+]
+

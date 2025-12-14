@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Hub - 智能家居控制</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* 主布局 */
+        .main-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 左侧边栏 */
+        .sidebar {
+            width: 30%;
+            background: white;
+            padding: 0;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-top {
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-menu {
+            padding: 8px 0;
+        }
+
+        .sidebar-log {
+            height: 485px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            border-top: 1px solid #e8e8e8;
+            flex-shrink: 0;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            margin: 4px 16px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+        }
+
+        .sidebar-item:hover {
+            background: #f5f5f5;
+            color: #1890ff;
+            border-color: #bfbfbf;
+        }
+
+        .sidebar-item.active {
+            background: white;
+            color: #1890ff;
+            border: 1px solid #1890ff;
+            border-radius: 999px;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            width: 70%;
+            padding: 32px;
+            overflow-y: auto;
+            position: relative;
+            margin-left: 30%;
+        }
+
+        /* 顶部导航菜单 */
+        .top-nav-menu {
+            position: absolute;
+            top: 32px;
+            right: 32px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .top-nav-item {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-nav-item:hover {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+            color: #1890ff;
+        }
+
+        .top-nav-item.active {
+            background: white;
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .greeting {
+            font-size: 24px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 32px;
+        }
+
+        /* 控制设备状态 */
+        .control-device-section {
+            background: #f8f9fa;
+            border-radius: 1px;
+            padding: 16px;
+            margin: 10px;
+            margin-bottom: 1px;
+        }
+
+        .control-device-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .control-device-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .refresh-btn {
+            background: white;
+            color: #333;
+            border: 1px solid #d9d9d9;
+            padding: 6px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .add-btn {
+            padding: 8px 16px;
+            background: white;
+            color: #333;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #f5f5f5;
+            border-color: #1890ff;
+            color: #1890ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+        }
+
+        .add-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-device-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            flex-shrink: 0;
+        }
+
+        .status-indicator.connected {
+            background: #52c41a;
+            box-shadow: 0 0 6px rgba(82, 196, 26, 0.4);
+        }
+
+        .status-indicator.disconnected {
+            background: #ff4d4f;
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .device-details {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e8e8e8;
+            font-size: 11px;
+            color: #999;
+            line-height: 1.4;
+        }
+
+        /* 手机屏幕显示区域 */
+        .phone-screen-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px;
+            margin-bottom: 16px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .phone-screen-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .phone-screen-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .phone-screen-toggle {
+            background: white;
+            color: #333;
+            border: 1px solid #d9d9d9;
+            padding: 6px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.3s;
+        }
+
+        .phone-screen-toggle:hover:not(:disabled) {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+        }
+
+        .phone-screen-toggle:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .phone-screen-container {
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            display: none;
+        }
+
+        .phone-screen-container.show {
+            display: block;
+        }
+
+        .phone-screen-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .phone-screen-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        /* 设备网格 */
+        .devices-section {
+            margin-bottom: 40px;
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .device-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .device-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .device-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .device-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .device-app-name {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .device-icon {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .device-icon-emoji {
+            font-size: 32px;
+        }
+
+        .device-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .device-status.active {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .device-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .device-info {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .device-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: white;
+            color: #333;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .device-action-btn:hover:not(:disabled) {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+            transform: translateY(-1px);
+        }
+
+        .device-action-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .device-action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 扫地机特殊样式 */
+        .device-card.cleaning {
+            border: 2px solid #1890ff;
+        }
+
+        .device-card.cleaning .device-status {
+            background: #1890ff;
+            color: white;
+        }
+
+        /* 日志输出区域 */
+        .log-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .log-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .log-clear-btn {
+            background: #f5f5f5;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .log-clear-btn:hover {
+            background: #e8e8e8;
+        }
+
+        .stream-output {
+            flex: 1;
+            padding: 12px 16px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 0;
+        }
+
+        .stream-output .line {
+            margin: 2px 0;
+        }
+
+        .stream-output .line.info {
+            color: #4ec9b0;
+        }
+
+        .stream-output .line.error {
+            color: #f48771;
+        }
+
+        .stream-output .line.success {
+            color: #4ec9b0;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1890ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 设备管理样式 */
+        .device-management-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .device-management-info {
+            flex: 1;
+        }
+
+        .device-management-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-management-details {
+            font-size: 13px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .device-management-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .action-btn.edit {
+            background: white;
+            color: #333;
+        }
+
+        .action-btn.edit:hover {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+        }
+
+        .action-btn.delete {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* 设备编辑模态框 */
+        .device-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .device-modal.show {
+            display: flex;
+        }
+
+        .device-modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 24px;
+        }
+
+        .device-modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #1890ff;
+        }
+
+        .icon-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .icon-preview img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Actions 编辑区域 */
+        #actions-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .action-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .action-row textarea {
+            flex: 2;
+            padding: 8px 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .action-row .remove-action-btn {
+            padding: 8px 12px;
+            background: #ff4d4f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .action-row .remove-action-btn:hover {
+            opacity: 0.8;
+        }
+
+        .add-action-btn {
+            padding: 8px 16px;
+            background: white;
+            color: #666;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .add-action-btn:hover {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .modal-btn.cancel {
+            background: white;
+            color: #666;
+        }
+
+        .modal-btn.cancel:hover {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+        }
+
+        .modal-btn.save {
+            background: white;
+            color: #333;
+        }
+
+        .modal-btn.save:hover {
+            background: #f5f5f5;
+            border-color: #bfbfbf;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主布局 -->
+    <div class="main-layout">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-top">
+                <!-- 控制设备状态 -->
+                <div class="control-device-section">
+                    <div class="control-device-header">
+                        <div class="control-device-title">控制设备状态</div>
+                        <button class="refresh-btn" onclick="checkControlDevice()" id="refresh-btn">
+                            <span>🔄</span>
+                            <span>刷新</span>
+                        </button>
+                    </div>
+                    <div class="control-device-status">
+                        <div class="status-indicator" id="status-indicator"></div>
+                        <div class="status-text" id="status-text">点击刷新检测</div>
+                    </div>
+                    <div class="device-details" id="device-details"></div>
+                </div>
+
+                <!-- 手机屏幕显示 -->
+                <div class="phone-screen-section">
+                    <div class="phone-screen-header">
+                        <div class="phone-screen-title">手机屏幕</div>
+                        <button class="phone-screen-toggle" onclick="togglePhoneScreen()" id="phone-screen-toggle">
+                            <span>📱</span>
+                            <span id="phone-screen-toggle-text">开始</span>
+                        </button>
+                    </div>
+                    <div class="phone-screen-container" id="phone-screen-container">
+                        <img class="phone-screen-image" id="phone-screen-image" alt="手机屏幕" onerror="this.parentElement.innerHTML='<div class=\'phone-screen-placeholder\'>无法获取屏幕截图<br>请确保手机已连接</div>'">
+                    </div>
+                    <div class="phone-screen-placeholder" id="phone-screen-placeholder">点击"开始"按钮显示手机屏幕</div>
+                </div>
+
+            </div>
+
+            <!-- 执行日志区域 -->
+            <div class="sidebar-log">
+                <div class="log-header">
+                    <div class="log-title" id="log-title">执行日志</div>
+                    <button class="log-clear-btn" onclick="clearLog()">清空</button>
+                </div>
+                <div class="stream-output" id="stream-output"></div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 顶部导航菜单 -->
+            <div class="top-nav-menu">
+                <div class="top-nav-item active" id="nav-control-panel">
+                    <span>🏠</span>
+                    <span>控制面板</span>
+                </div>
+                <div class="top-nav-item" id="nav-schedule-management">
+                    <span>⏰</span>
+                    <span>定时任务</span>
+                </div>
+                <div class="top-nav-item" id="nav-device-management">
+                    <span>💡</span>
+                    <span>设备管理</span>
+                </div>
+            </div>
+
+            <!-- 控制面板页面 -->
+            <div id="control-panel-page">
+                <div class="greeting">IoT Hub</div>
+
+                <!-- 常用设备 -->
+                <div class="devices-section">
+                    <div class="section-title">常用设备</div>
+                    <div class="devices-grid" id="devices-grid">
+                        <!-- 设备将动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 定时任务页面 -->
+            <div id="schedule-management-page" style="display: none;">
+                <div class="greeting">定时任务</div>
+                
+                <div class="devices-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div style="font-size: 18px; font-weight: 600;">任务列表</div>
+                        <button class="add-btn" onclick="showAddScheduleModal()">
+                            <span>➕</span>
+                            <span>添加任务</span>
+                        </button>
+                    </div>
+                    
+                    <div id="schedule-list"></div>
+                </div>
+            </div>
+
+            <!-- 设备管理页面 -->
+            <div id="device-management-page" style="display: none;">
+                <div class="greeting">设备管理</div>
+                
+                <div class="devices-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div class="section-title">设备列表</div>
+                        <button class="add-btn" onclick="showAddDeviceModal()">
+                            <span>➕</span>
+                            <span>添加设备</span>
+                        </button>
+                    </div>
+                    <div id="device-management-list">
+                        <!-- 设备列表将动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 定时任务编辑/添加模态框 -->
+    <div class="device-modal" id="schedule-modal">
+        <div class="device-modal-content">
+            <div class="device-modal-header" id="schedule-modal-title">添加定时任务</div>
+            <form id="schedule-form">
+                <input type="hidden" id="schedule-id-input">
+                <div class="form-group">
+                    <label>任务名称 *</label>
+                    <input type="text" id="schedule-name-input" placeholder="例如: 早上打开空调" required>
+                </div>
+                <div class="form-group">
+                    <label>选择设备 *</label>
+                    <select id="schedule-device-select" required onchange="loadDeviceActions()">
+                        <option value="">请选择设备...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>选择操作 *</label>
+                    <select id="schedule-action-select" required>
+                        <option value="">请先选择设备...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>执行时间 *</label>
+                    <input type="time" id="schedule-time-input" required>
+                </div>
+                <div class="form-group">
+                    <label>重复执行</label>
+                    <select id="schedule-repeat-input">
+                        <option value="once">仅一次</option>
+                        <option value="daily">每天</option>
+                        <option value="weekly">每周</option>
+                        <option value="weekdays">工作日 (周一至周五)</option>
+                        <option value="weekends">周末 (周六、周日)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="weekday-selector" style="display: none;">
+                    <label>选择星期几 *</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="0"> 周日
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="1"> 周一
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="2"> 周二
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="3"> 周三
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="4"> 周四
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="5"> 周五
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" name="weekday" value="6"> 周六
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="schedule-enabled-input" checked>
+                        启用任务
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel" onclick="closeScheduleModal()">取消</button>
+                    <button type="submit" class="modal-btn save">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 设备编辑/添加模态框 -->
+    <div class="device-modal" id="device-modal">
+        <div class="device-modal-content">
+            <div class="device-modal-header" id="device-modal-title">添加设备</div>
+            <form id="device-form">
+                <input type="hidden" id="device-id-input">
+                <div class="form-group">
+                    <label>设备名称 *</label>
+                    <input type="text" id="device-name-input" required>
+                </div>
+                <div class="form-group">
+                    <label>应用名称 (App) *</label>
+                    <input type="text" id="device-app-input" placeholder="例如: roborock" required>
+                </div>
+                <div class="form-group">
+                    <label>操作配置 (Actions) *</label>
+                    <div id="actions-container"></div>
+                    <button type="button" class="add-action-btn" onclick="addActionRow()">+ 添加操作</button>
+                </div>
+                <div class="form-group">
+                    <label>图标</label>
+                    <select id="device-icon-input">
+                        <option value="">选择图标...</option>
+                    </select>
+                    <div class="icon-preview" id="icon-preview"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel" onclick="closeDeviceModal()">取消</button>
+                    <button type="submit" class="modal-btn save">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5001';
+        let cleaningEventSource = null;
+        let isCleaning = false;
+        let currentEditingDeviceId = null;
+        let phoneScreenInterval = null;
+        let isPhoneScreenActive = false;
+        let logEventSource = null;  // 全局日志流连接
+
+        // 页面切换
+        function switchPage(page) {
+            const controlPanelPage = document.getElementById('control-panel-page');
+            const scheduleManagementPage = document.getElementById('schedule-management-page');
+            const deviceManagementPage = document.getElementById('device-management-page');
+            const navControlPanel = document.getElementById('nav-control-panel');
+            const navScheduleManagement = document.getElementById('nav-schedule-management');
+            const navDeviceManagement = document.getElementById('nav-device-management');
+
+            // 隐藏所有页面
+            controlPanelPage.style.display = 'none';
+            scheduleManagementPage.style.display = 'none';
+            deviceManagementPage.style.display = 'none';
+            
+            // 移除所有激活状态
+            navControlPanel.classList.remove('active');
+            navScheduleManagement.classList.remove('active');
+            navDeviceManagement.classList.remove('active');
+
+            if (page === 'control-panel') {
+                controlPanelPage.style.display = 'block';
+                navControlPanel.classList.add('active');
+                loadDevices();
+            } else if (page === 'schedule-management') {
+                scheduleManagementPage.style.display = 'block';
+                navScheduleManagement.classList.add('active');
+                loadScheduleList();
+            } else if (page === 'device-management') {
+                deviceManagementPage.style.display = 'block';
+                navDeviceManagement.classList.add('active');
+                loadDeviceManagementList();
+            }
+        }
+
+        // 顶部导航菜单点击事件
+        document.getElementById('nav-control-panel').addEventListener('click', () => {
+            switchPage('control-panel');
+        });
+        
+        document.getElementById('nav-schedule-management').addEventListener('click', () => {
+            switchPage('schedule-management');
+        });
+        
+        document.getElementById('nav-device-management').addEventListener('click', () => {
+            switchPage('device-management');
+        });
+
+        // 加载设备列表（控制面板）
+        async function loadDevices() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/devices`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    renderDevices(data.devices);
+                }
+            } catch (error) {
+                console.error('加载设备失败:', error);
+            }
+        }
+
+        // 渲染设备卡片
+        function renderDevices(devices) {
+            const grid = document.getElementById('devices-grid');
+            grid.innerHTML = '';
+
+            devices.forEach(device => {
+                const card = document.createElement('div');
+                card.className = 'device-card';
+                card.id = `device-card-${device.id}`;
+                // 移除卡片点击事件
+
+                // 判断是图标文件还是 emoji
+                let iconHtml = '';
+                if (device.icon && device.icon.includes('.')) {
+                    // 是图标文件
+                    iconHtml = `<img src="${API_BASE_URL}/api/icons/${device.icon}" alt="${device.name}" class="device-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span class="device-icon-emoji" style="display:none;">📱</span>`;
+                } else {
+                    // 是 emoji（向后兼容）
+                    iconHtml = `<span class="device-icon-emoji">${device.icon || '📱'}</span>`;
+                }
+
+                // 生成操作按钮
+                let actionsHtml = '';
+                if (device.actions && device.actions.length > 0) {
+                    actionsHtml = '<div class="device-actions">';
+                    device.actions.forEach(action => {
+                        actionsHtml += `<button class="device-action-btn" onclick="executeDeviceAction('${device.id}', '${action.id}')" id="action-btn-${device.id}-${action.id}">${action.name}</button>`;
+                    });
+                    actionsHtml += '</div>';
+                } else {
+                    // 如果没有配置 actions，使用默认的 command（向后兼容）
+                    actionsHtml = '<div class="device-actions"><button class="device-action-btn" onclick="executeDeviceAction(\'' + device.id + '\', null)">执行</button></div>';
+                }
+
+                card.innerHTML = `
+                    <div class="device-header">
+                        <div class="device-header-left">
+                            <div>${iconHtml}</div>
+                            ${device.app ? `<div class="device-app-name">${device.app}</div>` : ''}
+                        </div>
+                        <div class="device-status" id="device-status-${device.id}">${device.status || '待机'}</div>
+                    </div>
+                    <div class="device-name">${device.name}</div>
+                    <div class="device-info" id="device-info-${device.id}">选择操作</div>
+                    ${actionsHtml}
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // 加载设备管理列表
+        async function loadDeviceManagementList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/devices`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    renderDeviceManagementList(data.devices);
+                }
+            } catch (error) {
+                console.error('加载设备列表失败:', error);
+            }
+        }
+
+        // 渲染设备管理列表
+        function renderDeviceManagementList(devices) {
+            const list = document.getElementById('device-management-list');
+            list.innerHTML = '';
+
+            if (devices.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">暂无设备，点击"添加设备"按钮添加</div>';
+                return;
+            }
+
+            devices.forEach(device => {
+                const item = document.createElement('div');
+                item.className = 'device-management-item';
+                item.innerHTML = `
+                    <div class="device-management-info">
+                        <div class="device-management-name">
+                            ${device.icon && device.icon.includes('.') 
+                                ? `<img src="${API_BASE_URL}/api/icons/${device.icon}" alt="${device.name}" style="width: 24px; height: 24px; object-fit: contain; border-radius: 4px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span style="display:none;">📱</span>` 
+                                : `<span>${device.icon || '📱'}</span>`}
+                            <span>${device.name}</span>
+                        </div>
+                        <div class="device-management-details">
+                            <div>应用: ${device.app || '未设置'}</div>
+                            <div>操作数: ${device.actions && device.actions.length ? device.actions.length + ' 个' : '0 个'}</div>
+                            ${device.actions && device.actions.length > 0 
+                                ? `<div style="margin-top: 4px; font-size: 12px;">操作: ${device.actions.map(a => a.name).join(', ')}</div>` 
+                                : ''}
+                        </div>
+                    </div>
+                    <div class="device-management-actions">
+                        <button class="action-btn edit" onclick="editDevice('${device.id}')">编辑</button>
+                        <button class="action-btn delete" onclick="deleteDevice('${device.id}')">删除</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // 加载图标列表
+        async function loadIcons() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/icons`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('device-icon-input');
+                    // 清空现有选项（保留第一个"选择图标..."）
+                    select.innerHTML = '<option value="">选择图标...</option>';
+                    
+                    // 添加图标选项
+                    data.icons.forEach(icon => {
+                        const option = document.createElement('option');
+                        option.value = icon;
+                        option.textContent = icon;
+                        select.appendChild(option);
+                    });
+                    
+                    // 添加图标预览功能
+                    select.addEventListener('change', (e) => {
+                        const preview = document.getElementById('icon-preview');
+                        if (e.target.value) {
+                            preview.innerHTML = `<img src="${API_BASE_URL}/api/icons/${e.target.value}" alt="预览" onerror="this.parentElement.innerHTML='';">`;
+                        } else {
+                            preview.innerHTML = '';
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('加载图标列表失败:', error);
+            }
+        }
+
+        // 添加操作行
+        function addActionRow(action = null) {
+            const container = document.getElementById('actions-container');
+            const row = document.createElement('div');
+            row.className = 'action-row';
+            const actionId = action ? action.id : `action_${Date.now()}`;
+            row.innerHTML = `
+                <input type="text" class="action-name-input" placeholder="操作名称" value="${action ? action.name : ''}" required>
+                <textarea class="action-command-input" placeholder="例如: 打开{app}应用，启动扫地机全屋清扫" required>${action ? action.command : ''}</textarea>
+                <button type="button" class="remove-action-btn" onclick="removeActionRow(this)">删除</button>
+            `;
+            container.appendChild(row);
+        }
+
+        // 删除操作行
+        function removeActionRow(btn) {
+            btn.parentElement.remove();
+        }
+
+        // 显示添加设备模态框
+        async function showAddDeviceModal() {
+            currentEditingDeviceId = null;
+            document.getElementById('device-modal-title').textContent = '添加设备';
+            document.getElementById('device-form').reset();
+            document.getElementById('device-id-input').value = '';
+            document.getElementById('icon-preview').innerHTML = '';
+            document.getElementById('actions-container').innerHTML = '';
+            // 默认添加一个空的操作行
+            addActionRow();
+            await loadIcons();
+            document.getElementById('device-modal').classList.add('show');
+        }
+
+        // 编辑设备
+        async function editDevice(deviceId) {
+            try {
+                await loadIcons();
+                
+                const response = await fetch(`${API_BASE_URL}/api/devices`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const device = data.devices.find(d => d.id === deviceId);
+                    if (device) {
+                        currentEditingDeviceId = deviceId;
+                        document.getElementById('device-modal-title').textContent = '编辑设备';
+                        document.getElementById('device-id-input').value = device.id;
+                        document.getElementById('device-name-input').value = device.name;
+                        document.getElementById('device-app-input').value = device.app || '';
+                        document.getElementById('device-icon-input').value = device.icon || '';
+                        
+                        // 清空并重新加载 actions
+                        const actionsContainer = document.getElementById('actions-container');
+                        actionsContainer.innerHTML = '';
+                        if (device.actions && device.actions.length > 0) {
+                            device.actions.forEach(action => {
+                                addActionRow(action);
+                            });
+                        } else {
+                            // 如果没有 actions，添加一个空行
+                            addActionRow();
+                        }
+                        
+                        // 显示图标预览
+                        const preview = document.getElementById('icon-preview');
+                        if (device.icon && device.icon.includes('.')) {
+                            preview.innerHTML = `<img src="${API_BASE_URL}/api/icons/${device.icon}" alt="预览" onerror="this.parentElement.innerHTML='';">`;
+                        } else {
+                            preview.innerHTML = '';
+                        }
+                        
+                        document.getElementById('device-modal').classList.add('show');
+                    }
+                }
+            } catch (error) {
+                console.error('加载设备信息失败:', error);
+                alert('加载设备信息失败');
+            }
+        }
+
+        // 删除设备
+        async function deleteDevice(deviceId) {
+            if (!confirm('确定要删除这个设备吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/devices/${deviceId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    alert('设备删除成功');
+                    loadDeviceManagementList();
+                    loadDevices(); // 同时更新控制面板
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (error) {
+                console.error('删除设备失败:', error);
+                alert('删除设备失败');
+            }
+        }
+
+        // 关闭设备模态框
+        function closeDeviceModal() {
+            document.getElementById('device-modal').classList.remove('show');
+            document.getElementById('actions-container').innerHTML = '';
+            currentEditingDeviceId = null;
+        }
+
+        // 保存设备
+        document.getElementById('device-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const iconValue = document.getElementById('device-icon-input').value;
+            
+            // 收集所有 actions
+            const actionRows = document.querySelectorAll('.action-row');
+            const actions = [];
+            actionRows.forEach((row, index) => {
+                const nameInput = row.querySelector('.action-name-input');
+                const commandInput = row.querySelector('.action-command-input');
+                if (nameInput.value.trim() && commandInput.value.trim()) {
+                    actions.push({
+                        id: `action_${index}`,
+                        name: nameInput.value.trim(),
+                        command: commandInput.value.trim()
+                    });
+                }
+            });
+
+            if (actions.length === 0) {
+                alert('请至少添加一个操作');
+                return;
+            }
+
+            const deviceData = {
+                name: document.getElementById('device-name-input').value,
+                app: document.getElementById('device-app-input').value,
+                actions: actions,
+                icon: iconValue || '📱', // 如果没有选择图标文件，使用默认 emoji
+                status: '待机'
+            };
+
+            try {
+                let response;
+                if (currentEditingDeviceId) {
+                    // 更新设备
+                    response = await fetch(`${API_BASE_URL}/api/devices/${currentEditingDeviceId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(deviceData)
+                    });
+                } else {
+                    // 添加设备
+                    deviceData.id = `device_${Date.now()}`;
+                    response = await fetch(`${API_BASE_URL}/api/devices`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(deviceData)
+                    });
+                }
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    alert(currentEditingDeviceId ? '设备更新成功' : '设备添加成功');
+                    closeDeviceModal();
+                    loadDeviceManagementList();
+                    loadDevices(); // 同时更新控制面板
+                } else {
+                    alert('保存失败: ' + data.message);
+                }
+            } catch (error) {
+                console.error('保存设备失败:', error);
+                alert('保存设备失败');
+            }
+        });
+
+        // 点击模态框外部关闭
+        document.getElementById('device-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeDeviceModal();
+            }
+        });
+
+        // 切换手机屏幕显示
+        function togglePhoneScreen() {
+            const toggleBtn = document.getElementById('phone-screen-toggle');
+            const toggleText = document.getElementById('phone-screen-toggle-text');
+            const container = document.getElementById('phone-screen-container');
+            const placeholder = document.getElementById('phone-screen-placeholder');
+
+            if (isPhoneScreenActive) {
+                // 停止显示
+                isPhoneScreenActive = false;
+                if (phoneScreenInterval) {
+                    clearInterval(phoneScreenInterval);
+                    phoneScreenInterval = null;
+                }
+                container.classList.remove('show');
+                placeholder.style.display = 'flex';
+                toggleText.textContent = '开始';
+                toggleBtn.disabled = false;
+            } else {
+                // 开始显示
+                isPhoneScreenActive = true;
+                container.classList.add('show');
+                placeholder.style.display = 'none';
+                toggleText.textContent = '停止';
+                toggleBtn.disabled = true;
+                
+                // 立即获取一次
+                updatePhoneScreen();
+                
+                // 每2秒更新一次屏幕截图
+                phoneScreenInterval = setInterval(updatePhoneScreen, 2000);
+            }
+        }
+
+        // 更新手机屏幕截图
+        async function updatePhoneScreen() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/phone-screen`);
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.screenshot) {
+                    const screenImage = document.getElementById('phone-screen-image');
+                    screenImage.src = data.screenshot;
+                    
+                    // 恢复按钮状态
+                    const toggleBtn = document.getElementById('phone-screen-toggle');
+                    toggleBtn.disabled = false;
+                } else {
+                    // 如果失败，停止更新
+                    if (isPhoneScreenActive) {
+                        togglePhoneScreen();
+                    }
+                }
+            } catch (error) {
+                console.error('获取手机屏幕失败:', error);
+                // 如果失败，停止更新
+                if (isPhoneScreenActive) {
+                    togglePhoneScreen();
+                }
+            }
+        }
+
+        // 检测控制设备状态
+        async function checkControlDevice() {
+            const refreshBtn = document.getElementById('refresh-btn');
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const deviceDetails = document.getElementById('device-details');
+
+            // 禁用按钮并显示加载状态
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<span class="loading-spinner"></span><span>检测中...</span>';
+            statusText.textContent = '正在检测设备状态...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/check-adb-device`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    if (data.connected) {
+                        // 设备已连接
+                        statusIndicator.className = 'status-indicator connected';
+                        statusText.textContent = `已连接 (${data.device_count} 个设备)`;
+                        
+                        // 显示设备详情
+                        if (data.devices && data.devices.length > 0) {
+                            const deviceList = data.devices
+                                .filter(d => d.status === 'device')
+                                .map(d => `设备ID: ${d.device_id}`)
+                                .join('<br>');
+                            deviceDetails.innerHTML = deviceList;
+                        } else {
+                            deviceDetails.textContent = '';
+                        }
+                    } else {
+                        // 设备未连接
+                        statusIndicator.className = 'status-indicator disconnected';
+                        statusText.textContent = '未连接';
+                        deviceDetails.textContent = data.message || '未检测到已连接的设备';
+                    }
+                } else {
+                    // 检测失败
+                    statusIndicator.className = 'status-indicator disconnected';
+                    statusText.textContent = '检测失败';
+                    deviceDetails.textContent = data.message || data.error || '未知错误';
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator disconnected';
+                statusText.textContent = '连接失败';
+                deviceDetails.textContent = '无法连接到后端服务，请确保服务正在运行';
+            } finally {
+                // 恢复按钮状态
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<span>🔄</span><span>刷新</span>';
+            }
+        }
+
+        // 清空日志
+        function clearLog() {
+            const streamOutput = document.getElementById('stream-output');
+            streamOutput.innerHTML = '';
+        }
+
+        // 更新设备状态
+        async function updateDeviceStatus(deviceId, status, info) {
+            const statusEl = document.getElementById(`device-status-${deviceId}`);
+            const infoEl = document.getElementById(`device-info-${deviceId}`);
+            const cardEl = document.getElementById(`device-card-${deviceId}`);
+
+            if (statusEl) statusEl.textContent = status;
+            
+            // 更新 info
+            if (infoEl) {
+                infoEl.textContent = info;
+            }
+
+            if (cardEl) {
+                if (status === '执行中') {
+                    cardEl.classList.add('cleaning');
+                    if (statusEl) statusEl.classList.add('active');
+                } else {
+                    cardEl.classList.remove('cleaning');
+                    if (statusEl) statusEl.classList.remove('active');
+                }
+            }
+        }
+
+        // 追加流式输出
+        function appendStreamOutput(data) {
+            const outputDiv = document.getElementById('stream-output');
+            let className = 'line';
+            let prefix = '';
+
+            if (data.type === 'start') {
+                className += ' info';
+                prefix = '[开始] ';
+                
+                // 如果有 final_command，显示最终调用的命令
+                if (data.final_command) {
+                    const commandDiv = document.createElement('div');
+                    commandDiv.className = 'line info';
+                    commandDiv.style.fontWeight = 'bold';
+                    commandDiv.style.marginTop = '4px';
+                    commandDiv.style.marginBottom = '4px';
+                    commandDiv.textContent = `[最终命令] ${data.final_command}`;
+                    outputDiv.appendChild(commandDiv);
+                }
+            } else if (data.type === 'output') {
+                className += ' info';
+            } else if (data.type === 'end') {
+                if (data.status === 'success') {
+                    className += ' success';
+                    prefix = '[完成] ';
+                } else {
+                    className += ' error';
+                    prefix = '[失败] ';
+                }
+            } else if (data.type === 'error') {
+                className += ' error';
+                prefix = '[错误] ';
+            } else if (data.type === 'voice') {
+                className += ' info';
+                prefix = '[语音] ';
+            } else if (data.type === 'match') {
+                className += ' success';
+                prefix = '[匹配] ';
+            } else if (data.type === 'warning') {
+                className += ' error';
+                prefix = '[警告] ';
+            } else if (data.type === 'success') {
+                className += ' success';
+                prefix = '[成功] ';
+            } else if (data.type === 'connected') {
+                className += ' info';
+                prefix = '[连接] ';
+            } else if (data.type === 'heartbeat') {
+                // 心跳消息，不显示
+                return;
+            }
+
+            const lineDiv = document.createElement('div');
+            lineDiv.className = className;
+
+            if (data.line) {
+                lineDiv.textContent = prefix + data.line;
+            } else if (data.message) {
+                lineDiv.textContent = prefix + data.message;
+            } else if (data.error) {
+                lineDiv.textContent = prefix + data.error;
+            }
+
+            // 添加时间戳（如果有）
+            if (data.timestamp) {
+                const timeSpan = document.createElement('span');
+                timeSpan.style.color = '#666';
+                timeSpan.style.fontSize = '10px';
+                timeSpan.style.marginLeft = '8px';
+                timeSpan.textContent = data.timestamp;
+                lineDiv.appendChild(timeSpan);
+            }
+
+            outputDiv.appendChild(lineDiv);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        // 连接全局日志流
+        function connectLogStream() {
+            if (logEventSource) {
+                logEventSource.close();
+            }
+
+            logEventSource = new EventSource(`${API_BASE_URL}/api/logs/stream`);
+
+            logEventSource.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    appendStreamOutput(data);
+                } catch (e) {
+                    console.error('解析日志 JSON 失败:', e, event.data);
+                }
+            };
+
+            logEventSource.onerror = function(error) {
+                console.error('日志流连接错误:', error);
+                // 3秒后重连
+                setTimeout(() => {
+                    if (logEventSource && logEventSource.readyState === EventSource.CLOSED) {
+                        connectLogStream();
+                    }
+                }, 3000);
+            };
+        }
+
+        // 执行设备操作
+        async function executeDeviceAction(deviceId, actionId) {
+            if (isCleaning) {
+                return;
+            }
+
+            isCleaning = true;
+            updateDeviceStatus(deviceId, '执行中', '正在启动...');
+            
+            // 禁用所有操作按钮
+            const actionButtons = document.querySelectorAll(`[id^="action-btn-${deviceId}-"]`);
+            actionButtons.forEach(btn => btn.disabled = true);
+            
+            // 定义恢复按钮的函数
+            const restoreButtons = () => {
+                actionButtons.forEach(btn => btn.disabled = false);
+            };
+            
+            // 获取设备信息并更新日志标题
+            try {
+                const devicesResponse = await fetch(`${API_BASE_URL}/api/devices`);
+                const devicesData = await devicesResponse.json();
+                const device = devicesData.devices.find(d => d.id === deviceId);
+                
+                if (device) {
+                    const titleEl = document.getElementById('log-title');
+                    let actionName = '';
+                    if (actionId && device.actions) {
+                        const action = device.actions.find(a => a.id === actionId);
+                        if (action) {
+                            actionName = ` - ${action.name}`;
+                        }
+                    }
+                    
+                    if (device.icon && device.icon.includes('.')) {
+                        // 使用图标文件
+                        titleEl.innerHTML = `<img src="${API_BASE_URL}/api/icons/${device.icon}" alt="${device.name}" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; object-fit: contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"><span style="display:none;">📱</span> ${device.name}${actionName}`;
+                    } else {
+                        // 使用 emoji
+                        titleEl.textContent = `${device.icon || '📱'} ${device.name}${actionName}`;
+                    }
+                } else {
+                    document.getElementById('log-title').textContent = '执行日志';
+                }
+            } catch (e) {
+                console.error('获取设备信息失败:', e);
+            }
+            
+            // 清空之前的输出
+            const streamOutput = document.getElementById('stream-output');
+            streamOutput.innerHTML = '';
+
+            // 如果已经有连接在运行，先关闭
+            if (cleaningEventSource) {
+                cleaningEventSource.close();
+                cleaningEventSource = null;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/devices/${deviceId}/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action_id: actionId })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) {
+                        break;
+                    }
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // 保留最后一个不完整的行
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                appendStreamOutput(data);
+
+                                // 如果收到结束消息
+                                if (data.type === 'end' || data.type === 'error') {
+                                    isCleaning = false;
+                                    restoreButtons();
+                                    
+                                    if (data.status === 'success') {
+                                        updateDeviceStatus(deviceId, '待机', '执行完成');
+                                    } else {
+                                        updateDeviceStatus(deviceId, '待机', '执行失败');
+                                    }
+                                } else if (data.type === 'start') {
+                                    updateDeviceStatus(deviceId, '执行中', '正在执行命令...');
+                                }
+                            } catch (e) {
+                                console.error('解析 JSON 失败:', e, line);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                isCleaning = false;
+                restoreButtons();
+                updateDeviceStatus(deviceId, '待机', '连接失败');
+                appendStreamOutput({
+                    type: 'error',
+                    error: '连接失败：' + error.message
+                });
+            }
+        }
+
+        // ==================== 定时任务管理 ====================
+        
+        // 加载定时任务列表
+        async function loadScheduleList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/schedules`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    renderScheduleList(data.schedules);
+                }
+            } catch (error) {
+                console.error('加载定时任务失败:', error);
+            }
+        }
+
+        // 渲染定时任务列表
+        function renderScheduleList(schedules) {
+            const list = document.getElementById('schedule-list');
+            list.innerHTML = '';
+
+            if (schedules.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">暂无定时任务</div>';
+                return;
+            }
+
+            schedules.forEach(schedule => {
+                const item = document.createElement('div');
+                item.className = 'device-management-item';
+                
+                const repeatText = getRepeatText(schedule.repeat, schedule.weekdays);
+                const statusBadge = schedule.enabled 
+                    ? '<span style="color: #52c41a;">●</span> 已启用' 
+                    : '<span style="color: #999;">●</span> 已禁用';
+                
+                item.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                            ${schedule.name}
+                        </div>
+                        <div style="font-size: 13px; color: #666; margin-bottom: 4px;">
+                            设备: ${schedule.device_name} - ${schedule.action_name}
+                        </div>
+                        <div style="font-size: 13px; color: #666;">
+                            时间: ${schedule.time} | ${repeatText} | ${statusBadge}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="action-btn edit" onclick="editSchedule('${schedule.id}')">
+                            <span>✏️</span>
+                            <span>编辑</span>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteSchedule('${schedule.id}')">
+                            <span>🗑️</span>
+                            <span>删除</span>
+                        </button>
+                    </div>
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+
+        // 获取重复执行文本
+        function getRepeatText(repeat, weekdays) {
+            const repeatMap = {
+                'once': '仅一次',
+                'daily': '每天',
+                'weekly': '每周',
+                'weekdays': '工作日',
+                'weekends': '周末'
+            };
+            
+            if (repeat === 'weekly' && weekdays && weekdays.length > 0) {
+                const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                return weekdays.map(d => dayNames[d]).join('、');
+            }
+            
+            return repeatMap[repeat] || repeat;
+        }
+
+        // 显示添加任务模态框
+        async function showAddScheduleModal() {
+            document.getElementById('schedule-modal-title').textContent = '添加定时任务';
+            document.getElementById('schedule-form').reset();
+            document.getElementById('schedule-id-input').value = '';
+            document.getElementById('schedule-enabled-input').checked = true;
+            document.getElementById('weekday-selector').style.display = 'none';
+            
+            // 加载设备列表
+            await loadDeviceSelectOptions();
+            
+            document.getElementById('schedule-modal').style.display = 'flex';
+        }
+
+        // 加载设备选择选项
+        async function loadDeviceSelectOptions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/devices`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const select = document.getElementById('schedule-device-select');
+                    select.innerHTML = '<option value="">请选择设备...</option>';
+                    
+                    data.devices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        option.textContent = device.name;
+                        option.dataset.actions = JSON.stringify(device.actions);
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载设备列表失败:', error);
+            }
+        }
+
+        // 加载设备的操作选项
+        function loadDeviceActions() {
+            const deviceSelect = document.getElementById('schedule-device-select');
+            const actionSelect = document.getElementById('schedule-action-select');
+            
+            const selectedOption = deviceSelect.options[deviceSelect.selectedIndex];
+            
+            if (!selectedOption || !selectedOption.value) {
+                actionSelect.innerHTML = '<option value="">请先选择设备...</option>';
+                return;
+            }
+            
+            const actions = JSON.parse(selectedOption.dataset.actions || '[]');
+            
+            actionSelect.innerHTML = '<option value="">请选择操作...</option>';
+            actions.forEach(action => {
+                const option = document.createElement('option');
+                option.value = action.id;
+                option.textContent = action.name;
+                actionSelect.appendChild(option);
+            });
+        }
+
+        // 监听重复执行选择变化
+        document.addEventListener('DOMContentLoaded', () => {
+            const repeatSelect = document.getElementById('schedule-repeat-input');
+            if (repeatSelect) {
+                repeatSelect.addEventListener('change', (e) => {
+                    const weekdaySelector = document.getElementById('weekday-selector');
+                    if (e.target.value === 'weekly') {
+                        weekdaySelector.style.display = 'block';
+                    } else {
+                        weekdaySelector.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        // 编辑定时任务
+        async function editSchedule(scheduleId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/schedules`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    const schedule = data.schedules.find(s => s.id === scheduleId);
+                    if (schedule) {
+                        document.getElementById('schedule-modal-title').textContent = '编辑定时任务';
+                        document.getElementById('schedule-id-input').value = schedule.id;
+                        document.getElementById('schedule-name-input').value = schedule.name;
+                        document.getElementById('schedule-time-input').value = schedule.time;
+                        document.getElementById('schedule-repeat-input').value = schedule.repeat;
+                        document.getElementById('schedule-enabled-input').checked = schedule.enabled;
+                        
+                        // 加载设备列表
+                        await loadDeviceSelectOptions();
+                        
+                        // 设置选中的设备
+                        document.getElementById('schedule-device-select').value = schedule.device_id;
+                        
+                        // 加载操作列表
+                        loadDeviceActions();
+                        
+                        // 设置选中的操作
+                        setTimeout(() => {
+                            document.getElementById('schedule-action-select').value = schedule.action_id;
+                        }, 100);
+                        
+                        // 处理星期几选择
+                        if (schedule.repeat === 'weekly' && schedule.weekdays) {
+                            document.getElementById('weekday-selector').style.display = 'block';
+                            const checkboxes = document.querySelectorAll('input[name="weekday"]');
+                            checkboxes.forEach(cb => {
+                                cb.checked = schedule.weekdays.includes(parseInt(cb.value));
+                            });
+                        }
+                        
+                        document.getElementById('schedule-modal').style.display = 'flex';
+                    }
+                }
+            } catch (error) {
+                console.error('加载定时任务详情失败:', error);
+            }
+        }
+
+        // 删除定时任务
+        async function deleteSchedule(scheduleId) {
+            if (!confirm('确定要删除这个定时任务吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    loadScheduleList();
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (error) {
+                console.error('删除定时任务失败:', error);
+                alert('删除失败: ' + error.message);
+            }
+        }
+
+        // 关闭定时任务模态框
+        function closeScheduleModal() {
+            document.getElementById('schedule-modal').style.display = 'none';
+        }
+
+        // 保存定时任务
+        document.addEventListener('DOMContentLoaded', () => {
+            const scheduleForm = document.getElementById('schedule-form');
+            if (scheduleForm) {
+                scheduleForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const scheduleId = document.getElementById('schedule-id-input').value;
+                    const name = document.getElementById('schedule-name-input').value;
+                    const deviceId = document.getElementById('schedule-device-select').value;
+                    const actionId = document.getElementById('schedule-action-select').value;
+                    const time = document.getElementById('schedule-time-input').value;
+                    const repeat = document.getElementById('schedule-repeat-input').value;
+                    const enabled = document.getElementById('schedule-enabled-input').checked;
+                    
+                    // 获取选中的星期几
+                    let weekdays = [];
+                    if (repeat === 'weekly') {
+                        const checkboxes = document.querySelectorAll('input[name="weekday"]:checked');
+                        weekdays = Array.from(checkboxes).map(cb => parseInt(cb.value));
+                        
+                        if (weekdays.length === 0) {
+                            alert('请至少选择一个星期几');
+                            return;
+                        }
+                    }
+                    
+                    const scheduleData = {
+                        name,
+                        device_id: deviceId,
+                        action_id: actionId,
+                        time,
+                        repeat,
+                        weekdays,
+                        enabled
+                    };
+                    
+                    try {
+                        const url = scheduleId 
+                            ? `${API_BASE_URL}/api/schedules/${scheduleId}`
+                            : `${API_BASE_URL}/api/schedules`;
+                        const method = scheduleId ? 'PUT' : 'POST';
+                        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(scheduleData)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.status === 'success') {
+                            closeScheduleModal();
+                            loadScheduleList();
+                        } else {
+                            alert('保存失败: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('保存定时任务失败:', error);
+                        alert('保存失败: ' + error.message);
+                    }
+                });
+            }
+        });
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDevices();
+            // 连接全局日志流
+            connectLogStream();
+        });
+
+    </script>
+</body>
+</html>
