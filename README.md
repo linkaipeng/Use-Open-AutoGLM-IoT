@@ -15,6 +15,10 @@
 - ⏰ **定时任务** - 支持每天/每周定时执行设备操作
 - 📝 **执行日志** - 实时显示操作日志和语音指令
 
+## 🎬 演示视频
+
+[演示视频](https://www.bilibili.com/video/BV1hmmeBNEsY/?vd_source=f9c1c217e4b17a2883e1f8c7bcf3b797)
+
 
 ## 📦 安装步骤
 
