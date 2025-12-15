@@ -17,7 +17,7 @@
 
 ## 🎬 演示视频
 
-[演示视频](https://www.bilibili.com/video/BV1hmmeBNEsY/?vd_source=f9c1c217e4b17a2883e1f8c7bcf3b797)
+[演示视频](https://www.xiaohongshu.com/discovery/item/693e863f000000000d039da0?source=webshare&xhsshare=pc_web&xsec_token=AB4xbdBQwoWSwbh3zedMKjveAqnXDvoP3NCeGlXRRmhlU=&xsec_source=pc_share)
 
 
 ## 📦 安装步骤
